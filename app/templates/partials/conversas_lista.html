@@ -1,0 +1,193 @@
+{% set ns = namespace(
+  aguardando=[],
+  bot=[],
+  finalizadas=[]
+) %}
+
+{% for c in conversas %}
+  {% if c.atendimento_humano and c.status_atendimento == "aguardando" %}
+    {% set ns.aguardando = ns.aguardando + [c] %}
+  {% elif c.status_atendimento == "finalizado" %}
+    {% set ns.finalizadas = ns.finalizadas + [c] %}
+  {% else %}
+    {% set ns.bot = ns.bot + [c] %}
+  {% endif %}
+{% endfor %}
+
+<div class="queue-grid">
+  <section class="queue-card">
+    <div class="queue-head">
+      <div class="queue-head-left">
+        <div class="queue-icon">!</div>
+        <div>
+          <h6 class="queue-title">Aguardando Atendimento</h6>
+          <div class="queue-subtitle">Conversas que precisam de ação humana primeiro.</div>
+        </div>
+      </div>
+      <span class="queue-count">{{ ns.aguardando|length }}</span>
+    </div>
+
+    <div class="queue-body">
+      {% if ns.aguardando %}
+        <div class="conversation-list">
+          {% for c in ns.aguardando %}
+            <a class="conversation-item priority" href="/admin/conversas/{{ c.telefone_usuario }}">
+              <div class="conversation-main">
+                <div class="conversation-avatar">
+                  {{ (c.telefone_usuario|string)[-2:] }}
+                </div>
+
+                <div class="conversation-content">
+                  <div class="conversation-topline">
+                    <div class="conversation-phone">{{ c.telefone_usuario }}</div>
+                    <span class="priority-flag">Prioridade</span>
+                  </div>
+
+                  <div class="conversation-meta">
+                    <span class="status-badge-custom waiting">
+                      <span class="badge-dot"></span>
+                      aguardando
+                    </span>
+                  </div>
+
+                  <div class="conversation-preview">
+                    Usuário aguardando retorno da secretaria ou atendimento manual.
+                  </div>
+                </div>
+              </div>
+
+              <div class="conversation-side">
+                <div class="mini-stack">
+                  <div class="conversation-time">{{ c.ultima_data.strftime("%d/%m/%Y %H:%M") if c.ultima_data else "" }}</div>
+                  <span class="btn btn-danger conversation-open">Abrir</span>
+                </div>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-queue">Nenhuma conversa aguardando atendimento no momento.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="queue-card">
+    <div class="queue-head">
+      <div class="queue-head-left">
+        <div class="queue-icon">B</div>
+        <div>
+          <h6 class="queue-title">Conversando com o Bot / Em atendimento</h6>
+          <div class="queue-subtitle">Conversas em andamento com automação ou atendimento ativo.</div>
+        </div>
+      </div>
+      <span class="queue-count">{{ ns.bot|length }}</span>
+    </div>
+
+    <div class="queue-body">
+      {% if ns.bot %}
+        <div class="conversation-list">
+          {% for c in ns.bot %}
+            <a class="conversation-item" href="/admin/conversas/{{ c.telefone_usuario }}">
+              <div class="conversation-main">
+                <div class="conversation-avatar">
+                  {{ (c.telefone_usuario|string)[-2:] }}
+                </div>
+
+                <div class="conversation-content">
+                  <div class="conversation-topline">
+                    <div class="conversation-phone">{{ c.telefone_usuario }}</div>
+                    {% if c.atendimento_humano and c.status_atendimento == "em_atendimento" %}
+                      <span class="dot-live"></span>
+                    {% endif %}
+                  </div>
+
+                  <div class="conversation-meta">
+                    {% if c.atendimento_humano and c.status_atendimento == "em_atendimento" %}
+                      <span class="status-badge-custom human">
+                        <span class="badge-dot"></span>
+                        em atendimento
+                      </span>
+                    {% else %}
+                      <span class="status-badge-custom bot">
+                        <span class="badge-dot"></span>
+                        bot
+                      </span>
+                    {% endif %}
+                  </div>
+
+                  <div class="conversation-preview">
+                    Conversa ativa no fluxo do bot ou em acompanhamento operacional.
+                  </div>
+                </div>
+              </div>
+
+              <div class="conversation-side">
+                <div class="mini-stack">
+                  <div class="conversation-time">{{ c.ultima_data.strftime("%d/%m/%Y %H:%M") if c.ultima_data else "" }}</div>
+                  <span class="btn btn-danger conversation-open">Abrir</span>
+                </div>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-queue">Nenhuma conversa ativa.</div>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="queue-card">
+    <div class="queue-head">
+      <div class="queue-head-left">
+        <div class="queue-icon">✓</div>
+        <div>
+          <h6 class="queue-title">Finalizadas</h6>
+          <div class="queue-subtitle">Conversas encerradas e já resolvidas.</div>
+        </div>
+      </div>
+      <span class="queue-count">{{ ns.finalizadas|length }}</span>
+    </div>
+
+    <div class="queue-body">
+      {% if ns.finalizadas %}
+        <div class="conversation-list">
+          {% for c in ns.finalizadas %}
+            <a class="conversation-item" href="/admin/conversas/{{ c.telefone_usuario }}">
+              <div class="conversation-main">
+                <div class="conversation-avatar">
+                  {{ (c.telefone_usuario|string)[-2:] }}
+                </div>
+
+                <div class="conversation-content">
+                  <div class="conversation-topline">
+                    <div class="conversation-phone">{{ c.telefone_usuario }}</div>
+                  </div>
+
+                  <div class="conversation-meta">
+                    <span class="status-badge-custom finished">
+                      <span class="badge-dot"></span>
+                      finalizado
+                    </span>
+                  </div>
+
+                  <div class="conversation-preview">
+                    Conversa encerrada. Uma nova mensagem deve reabrir o fluxo automaticamente.
+                  </div>
+                </div>
+              </div>
+
+              <div class="conversation-side">
+                <div class="mini-stack">
+                  <div class="conversation-time">{{ c.ultima_data.strftime("%d/%m/%Y %H:%M") if c.ultima_data else "" }}</div>
+                  <span class="btn btn-danger conversation-open">Abrir</span>
+                </div>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-queue">Nenhuma conversa finalizada.</div>
+      {% endif %}
+    </div>
+  </section>
+</div>

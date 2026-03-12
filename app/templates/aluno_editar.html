@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Editar aluno{% endblock %}
+{% block page_title %}Editar aluno{% endblock %}
+
+{% block content %}
+<div class="panel-card narrow-card">
+  <div class="panel-card-header">
+    <h5 class="mb-0">{{ aluno.nome_aluno }}</h5>
+  </div>
+
+  <form method="post" class="p-4">
+    <div class="row g-3">
+      <div class="col-md-6">
+        <label class="form-label">Série</label>
+        <input class="form-control" name="serie" value="{{ aluno.serie or '' }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Turno</label>
+        <input class="form-control" name="turno" value="{{ aluno.turno or '' }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Status matrícula</label>
+        <input class="form-control" name="status_matricula" value="{{ aluno.status_matricula or '' }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Status rematrícula</label>
+        <input class="form-control" name="status_rematricula" value="{{ aluno.status_rematricula or '' }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Status financeiro</label>
+        <input class="form-control" name="status_financeiro" value="{{ aluno.status_financeiro or '' }}">
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Horário de saída</label>
+        <input class="form-control" name="horario_saida" value="{{ aluno.horario_saida or '' }}">
+      </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+      <button class="btn btn-danger" type="submit">Salvar alterações</button>
+      <a class="btn btn-outline-secondary" href="/admin/alunos">Voltar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

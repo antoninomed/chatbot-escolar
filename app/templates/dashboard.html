@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard operacional{% endblock %}
+{% block page_subtitle %}Uma visão executiva do atendimento do chatbot, da base escolar e da atividade recente do painel.{% endblock %}
+{% block page_actions %}
+<a href="/admin/conversas" class="quick-chip"><i class="bi bi-arrow-up-right"></i> Abrir inbox</a>
+{% endblock %}
+
+{% block content %}
+<div class="hero-card mb-4">
+  <div class="hero-grid position-relative">
+    <div>
+      <div class="hero-title">Central de acompanhamento do chatbot escolar</div>
+      <p class="hero-copy mb-4">
+        Monitore conversas, acompanhe picos de atendimento e tenha clareza sobre o volume operacional do bot com uma interface mais próxima de um produto SaaS.
+      </p>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="/admin/conversas" class="btn btn-danger"><i class="bi bi-chat-dots me-2"></i>Ver conversas</a>
+        <a href="/admin/configuracoes" class="btn btn-outline-secondary"><i class="bi bi-gear me-2"></i>Ajustar integrações</a>
+      </div>
+    </div>
+
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <div class="hero-stat-label">Mensagens hoje</div>
+        <div class="hero-stat-value">{{ total_recebidas }}</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Respostas enviadas</div>
+        <div class="hero-stat-value">{{ total_enviadas }}</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Conversas em andamento</div>
+        <div class="hero-stat-value">{{ conversas_ativas|length }}</div>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-label">Base escolar ativa</div>
+        <div class="hero-stat-value">{{ total_alunos }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-6 col-xl-3">
+    <div class="metric-card">
+      <div class="metric-head">
+        <div class="metric-label">Total de mensagens</div>
+        <div class="metric-icon"><i class="bi bi-chat-square-text"></i></div>
+      </div>
+      <div class="metric-value">{{ total_mensagens }}</div>
+      <div class="metric-foot">Histórico consolidado do atendimento.</div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-xl-3">
+    <div class="metric-card">
+      <div class="metric-head">
+        <div class="metric-label">Recebidas</div>
+        <div class="metric-icon"><i class="bi bi-arrow-down-left"></i></div>
+      </div>
+      <div class="metric-value">{{ total_recebidas }}</div>
+      <div class="metric-foot">Entradas vindas do WhatsApp.</div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-xl-3">
+    <div class="metric-card">
+      <div class="metric-head">
+        <div class="metric-label">Enviadas</div>
+        <div class="metric-icon"><i class="bi bi-arrow-up-right"></i></div>
+      </div>
+      <div class="metric-value">{{ total_enviadas }}</div>
+      <div class="metric-foot">Mensagens entregues pelo bot.</div>
+    </div>
+  </div>
+
+  <div class="col-md-6 col-xl-3">
+    <div class="metric-card">
+      <div class="metric-head">
+        <div class="metric-label">Alunos ativos</div>
+        <div class="metric-icon"><i class="bi bi-mortarboard"></i></div>
+      </div>
+      <div class="metric-value">{{ total_alunos }}</div>
+      <div class="metric-foot">Registros disponíveis para consulta.</div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="panel-card h-100">
+      <div class="panel-card-header">
+        <div>
+          <h5 class="panel-title">Últimas mensagens</h5>
+          <div class="panel-note">Fluxo recente do atendimento com contexto rápido do que está acontecendo.</div>
+        </div>
+        <a href="/admin/conversas" class="btn btn-sm btn-outline-secondary">Ver inbox</a>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table table-modern align-middle">
+          <thead>
+            <tr>
+              <th>Contato</th>
+              <th>Origem</th>
+              <th>Mensagem</th>
+              <th>Data</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in ultimas_mensagens %}
+            <tr>
+              <td class="fw-semibold">{{ m.telefone_usuario }}</td>
+              <td>
+                {% if m.tipo_mensagem == 'recebida' %}
+                  <span class="status-badge status-badge-neutral"><i class="bi bi-arrow-down-left"></i>Recebida</span>
+                {% else %}
+                  <span class="status-badge status-badge-danger"><i class="bi bi-arrow-up-right"></i>Enviada</span>
+                {% endif %}
+              </td>
+              <td>{{ m.conteudo }}</td>
+              <td>{{ m.criada_em }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="d-grid gap-4">
+      <div class="panel-card">
+        <div class="panel-card-header">
+          <div>
+            <h5 class="panel-title">Saúde da operação</h5>
+            <div class="panel-note">Leitura rápida para o administrador.</div>
+          </div>
+        </div>
+        <div class="p-4 d-grid gap-3">
+          <div class="info-item">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="info-label">API WhatsApp</div>
+                <div class="info-value">Conectada</div>
+              </div>
+              <span class="status-badge status-badge-success">Online</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="info-label">Base de dados</div>
+                <div class="info-value">Disponível</div>
+              </div>
+              <span class="status-badge status-badge-success">OK</span>
+            </div>
+          </div>
+          <div class="info-item">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <div class="info-label">Webhook</div>
+                <div class="info-value">Ativo</div>
+              </div>
+              <span class="status-badge status-badge-success">Rodando</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-card">
+        <div class="panel-card-header">
+          <div>
+            <h5 class="panel-title">Conversas recentes</h5>
+            <div class="panel-note">Acessos rápidos para o time administrativo.</div>
+          </div>
+        </div>
+        <div class="list-group list-group-flush">
+          {% for c in conversas_ativas %}
+          <a href="/admin/conversas/{{ c.telefone_usuario }}" class="list-group-item list-group-item-action border-0 px-4 py-3 bg-transparent">
+            <div class="fw-semibold mb-1">{{ c.telefone_usuario }}</div>
+            <small class="text-secondary">Última interação em {{ c.ultima_data }}</small>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

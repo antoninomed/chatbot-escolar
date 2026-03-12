@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Alunos{% endblock %}
+{% block page_title %}Alunos{% endblock %}
+
+{% block content %}
+<div class="panel-card">
+  <div class="panel-card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0">Base de alunos</h5>
+    <form class="d-flex gap-2" method="get" action="/admin/alunos">
+      <input type="text" class="form-control" name="busca" value="{{ busca }}" placeholder="Buscar aluno">
+      <button class="btn btn-outline-danger">Buscar</button>
+    </form>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-modern">
+      <thead>
+        <tr>
+          <th>Aluno</th>
+          <th>Série</th>
+          <th>Turno</th>
+          <th>Rematrícula</th>
+          <th>Financeiro</th>
+          <th>Saída</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for aluno in alunos %}
+        <tr>
+          <td class="fw-semibold">{{ aluno.nome_aluno }}</td>
+          <td>{{ aluno.serie }}</td>
+          <td>{{ aluno.turno }}</td>
+          <td>
+            <span class="badge {% if aluno.status_rematricula == 'OK' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+              {{ aluno.status_rematricula }}
+            </span>
+          </td>
+          <td>
+            <span class="badge {% if aluno.status_financeiro == 'Regular' %}bg-success{% else %}bg-danger{% endif %}">
+              {{ aluno.status_financeiro }}
+            </span>
+          </td>
+          <td>{{ aluno.horario_saida }}</td>
+          <td class="text-end">
+            <a class="btn btn-sm btn-danger" href="/admin/alunos/{{ aluno.id }}/editar">Editar</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
