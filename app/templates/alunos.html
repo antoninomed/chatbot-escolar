@@ -1,54 +1,125 @@
 {% extends "base.html" %}
 {% block title %}Alunos{% endblock %}
-{% block page_title %}Alunos{% endblock %}
+{% block page_title %}Gestão de alunos{% endblock %}
+{% block page_subtitle %}Visualize a base acadêmica, acompanhe indicadores. Acesse e edite os registros dos alunos.{% endblock %}
+
+{% block page_actions %}
+<a href="/admin" class="quick-chip"><i class="bi bi-grid"></i> Visão geral</a>
+{% endblock %}
 
 {% block content %}
-<div class="panel-card">
-  <div class="panel-card-header d-flex justify-content-between align-items-center">
-    <h5 class="mb-0">Base de alunos</h5>
-    <form class="d-flex gap-2" method="get" action="/admin/alunos">
-      <input type="text" class="form-control" name="busca" value="{{ busca }}" placeholder="Buscar aluno">
-      <button class="btn btn-outline-danger">Buscar</button>
-    </form>
-  </div>
+<div class="students-page">
+  <section class="panel-card students-table-card">
+    <div class="panel-card-header students-table-header">
+      <div>
+        <div class="section-eyebrow">BASE ACADÊMICA</div>
+        <p class="table-helper mb-0">
+          Relação de alunos com status de rematrícula, situação financeira e horário de saída.
+        </p>
+      </div>
+    </div>
 
-  <div class="table-responsive">
-    <table class="table table-modern">
-      <thead>
-        <tr>
-          <th>Aluno</th>
-          <th>Série</th>
-          <th>Turno</th>
-          <th>Rematrícula</th>
-          <th>Financeiro</th>
-          <th>Saída</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for aluno in alunos %}
-        <tr>
-          <td class="fw-semibold">{{ aluno.nome_aluno }}</td>
-          <td>{{ aluno.serie }}</td>
-          <td>{{ aluno.turno }}</td>
-          <td>
-            <span class="badge {% if aluno.status_rematricula == 'OK' %}bg-success{% else %}bg-warning text-dark{% endif %}">
-              {{ aluno.status_rematricula }}
-            </span>
-          </td>
-          <td>
-            <span class="badge {% if aluno.status_financeiro == 'Regular' %}bg-success{% else %}bg-danger{% endif %}">
-              {{ aluno.status_financeiro }}
-            </span>
-          </td>
-          <td>{{ aluno.horario_saida }}</td>
-          <td class="text-end">
-            <a class="btn btn-sm btn-danger" href="/admin/alunos/{{ aluno.id }}/editar">Editar</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
+      <form class="students-search-form" method="get" action="/admin/alunos">
+        <div class="search-input-wrap">
+          <i class="bi bi-search"></i>
+          <input
+            type="text"
+            class="form-control"
+            name="busca"
+            value="{{ busca }}"
+            placeholder="Buscar por nome do aluno"
+          >
+        </div>
+        <button class="btn btn-danger students-search-btn" type="submit">Buscar</button>
+      </form>
+
+    <div class="table-responsive">
+      <table class="table table-modern students-table align-middle">
+        <thead>
+          <tr>
+            <th>Aluno</th>
+            <th>Série</th>
+            <th>Turno</th>
+            <th>Rematrícula</th>
+            <th>Financeiro</th>
+            <th>Saída</th>
+            <th class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for aluno in alunos %}
+          <tr>
+            <td>
+              <div class="student-name-cell">
+                <div class="student-avatar">
+                  {{ (aluno.nome_aluno or 'A')[0] | upper }}
+                </div>
+                <div>
+                  <div class="student-name">{{ aluno.nome_aluno }}</div>
+                </div>
+              </div>
+            </td>
+
+            <td>
+              <span class="table-strong">{{ aluno.serie }}</span>
+            </td>
+
+            <td>
+              <span class="table-muted">{{ aluno.turno }}</span>
+            </td>
+
+            <td>
+              <span class="status-pill {% if aluno.status_rematricula == 'OK' %}is-success{% else %}is-warning{% endif %}">
+                {% if aluno.status_rematricula == 'OK' %}
+                  <i class="bi bi-check-circle-fill"></i>
+                {% else %}
+                  <i class="bi bi-exclamation-circle-fill"></i>
+                {% endif %}
+                {{ aluno.status_rematricula }}
+              </span>
+            </td>
+
+            <td>
+              <span class="status-pill {% if aluno.status_financeiro == 'Regular' %}is-success{% else %}is-danger{% endif %}">
+                {% if aluno.status_financeiro == 'Regular' %}
+                  <i class="bi bi-shield-check"></i>
+                {% else %}
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                {% endif %}
+                {{ aluno.status_financeiro }}
+              </span>
+            </td>
+
+            <td>
+              <span class="table-strong">{{ aluno.horario_saida }}</span>
+            </td>
+
+            <td class="text-end">
+              <a class="btn btn-sm students-action-btn" href="/admin/alunos/{{ aluno.id }}/editar">
+                <i class="bi bi-pencil-square"></i>
+                Editar cadastro
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="7">
+              <div class="empty-state">
+                <div class="empty-state-icon">
+                  <i class="bi bi-people"></i>
+                </div>
+                <div class="empty-state-title">Nenhum aluno encontrado</div>
+                <div class="empty-state-text">
+                  Não há registros compatíveis com a busca realizada no momento.
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
 </div>
 {% endblock %}

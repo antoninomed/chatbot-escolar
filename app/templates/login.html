@@ -8,29 +8,94 @@
   <link href="/static/css/admin.css" rel="stylesheet">
 </head>
 <body class="login-body">
-  <div class="login-wrapper">
-    <div class="login-card">
-      <div class="login-header">
-        <div class="brand-badge large">TZ</div>
-        <h2>Tio Zé Admin</h2>
-        <p>Faça login para acessar o painel do chatbot escolar</p>
+  <div class="login-page">
+    <div class="login-card shadow-sm">
+      <div class="login-brand-side">
+        <div class="brand-badge">CE</div>
+        <h1 class="brand-title">Chatbot Escolar</h1>
+        <p class="brand-description">
+          Painel administrativo para acompanhamento de conversas, atendimento e operação do chatbot.
+        </p>
+
+        <div class="brand-info-list">
+          <div class="brand-info-item">
+            <span class="brand-info-dot"></span>
+            Acesso seguro para administradores
+          </div>
+          <div class="brand-info-item">
+            <span class="brand-info-dot"></span>
+            Gerencie atendimentos em tempo real
+          </div>
+          <div class="brand-info-item">
+            <span class="brand-info-dot"></span>
+            Ambiente exclusivo da instituição
+          </div>
+        </div>
       </div>
 
-      {% if erro %}
-        <div class="alert alert-danger">{{ erro }}</div>
-      {% endif %}
+      <div class="login-form-side">
+        <div class="login-form-header">
+          <span class="login-kicker">Acesso ao sistema</span>
+          <h2 class="login-title">Entrar no painel</h2>
+          <p class="login-subtitle">
+            Informe suas credenciais para continuar.
+          </p>
+        </div>
 
-      <form method="post" action="/admin/login">
-        <div class="mb-3">
-          <label class="form-label">E-mail</label>
-          <input type="email" name="email" class="form-control form-control-lg" required>
+        {% if erro %}
+          <div class="alert alert-danger login-alert" role="alert">
+            {{ erro }}
+          </div>
+        {% endif %}
+
+        <form method="post" action="/admin/login" class="login-form" novalidate>
+          <div class="mb-3">
+            <label for="email" class="form-label">E-mail</label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              class="form-control login-input"
+              placeholder="seuemail@escola.com"
+              autocomplete="username"
+              required
+            >
+          </div>
+
+          <div class="mb-2">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <label for="senha" class="form-label mb-0">Senha</label>
+              <a href="#" class="login-link">Esqueci minha senha</a>
+            </div>
+            <input
+              id="senha"
+              type="password"
+              name="senha"
+              class="form-control login-input"
+              placeholder="Digite sua senha"
+              autocomplete="current-password"
+              required
+            >
+          </div>
+
+          <div class="login-options mb-4">
+            <div class="form-check login-check">
+              <input class="form-check-input" type="checkbox" id="lembrar">
+              <label class="form-check-label" for="lembrar">
+                Manter conectado
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" class="btn login-btn w-100">
+            Entrar no painel
+          </button>
+        </form>
+
+        <div class="login-footer">
+          Área restrita para administradores autorizados.
         </div>
-        <div class="mb-4">
-          <label class="form-label">Senha</label>
-          <input type="password" name="senha" class="form-control form-control-lg" required>
-        </div>
-        <button type="submit" class="btn btn-danger btn-lg w-100">Entrar</button>
-      </form>
+      </div>
     </div>
   </div>
 </body>

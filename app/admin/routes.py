@@ -2,7 +2,7 @@ from datetime import timezone, datetime
 import mimetypes
 
 from fastapi import APIRouter, Request, Form, Depends, UploadFile, File
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import func, case, and_
@@ -126,6 +126,34 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     usuario = _usuario_atual(request, db)
     escola = db.query(Tenant).filter(Tenant.id == usuario.id_escola).first()
 
+    atendimentos_pendentes = db.query(Conversation).filter(
+    Conversation.tenant_id == usuario.id_escola,
+    Conversation.status_atendimento == "aguardando"
+    ).count()
+
+    conversas_pendentes = db.query(
+    MensagemWhatsapp.telefone_usuario,
+    func.max(MensagemWhatsapp.criada_em).label("ultima_data")
+    ).join(
+        Conversation,
+        and_(
+            Conversation.user_wa_id == MensagemWhatsapp.telefone_usuario,
+            Conversation.tenant_id == usuario.id_escola
+        )
+    ).filter(
+        Conversation.status_atendimento == "aguardando",
+        MensagemWhatsapp.id_escola == usuario.id_escola
+    ).group_by(
+        MensagemWhatsapp.telefone_usuario
+    ).order_by(
+        func.max(MensagemWhatsapp.criada_em).desc()
+    ).limit(6).all()
+
+
+
+
+
+
     total_mensagens = db.query(MensagemWhatsapp).filter(
         MensagemWhatsapp.id_escola == usuario.id_escola
     ).count()
@@ -172,6 +200,10 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "total_alunos": total_alunos,
             "ultimas_mensagens": ultimas_mensagens,
             "conversas_ativas": conversas_ativas,
+            "atendimentos_pendentes": atendimentos_pendentes,
+            "conversas_pendentes": conversas_pendentes,
+
+
         }
     )
 
@@ -266,10 +298,19 @@ async def responder_conversa(
     request: Request,
     mensagem: str = Form(""),
     acao: str = Form(""),
-    arquivo: UploadFile | None = File(None),
+    arquivos: list[UploadFile] = File(default=[]),
     db: Session = Depends(get_db),
 ):
     usuario = _usuario_atual(request, db)
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+    if not usuario:
+        if is_ajax:
+            return JSONResponse(
+                {"ok": False, "error": "Sessão expirada. Faça login novamente."},
+                status_code=401
+            )
+        return RedirectResponse(url="/admin/login", status_code=302)
 
     conversa = db.query(Conversation).filter(
         Conversation.tenant_id == usuario.id_escola,
@@ -277,76 +318,143 @@ async def responder_conversa(
     ).first()
 
     if not conversa:
+        if is_ajax:
+            return JSONResponse(
+                {"ok": False, "error": "Conversa não encontrada."},
+                status_code=404
+            )
         return RedirectResponse(url="/admin/conversas", status_code=302)
 
     mensagem = (mensagem or "").strip()
     acao = (acao or "").strip()
+    arquivos_validos = [arquivo for arquivo in arquivos if arquivo and arquivo.filename]
 
-    if acao == "finalizar":
-        conversa.atendimento_humano = False
-        conversa.status_atendimento = "finalizado"
-        conversa.state = "inicio"
+    try:
+        if acao == "finalizar":
+            mensagem_finalizacao = (
+                "Obrigado pelo contato! 😊\n\n"
+                "Seu atendimento foi encerrado e esperamos ter ajudado da melhor forma possível.\n\n"
+                "Sempre que precisar, estaremos à disposição."
+            )
+
+            await send_text_message(telefone, mensagem_finalizacao)
+
+            salvar_mensagem(
+                db=db,
+                id_escola=usuario.id_escola,
+                telefone_usuario=telefone,
+                tipo_mensagem="enviada",
+                conteudo=mensagem_finalizacao,
+                tipo_conteudo="texto",
+            )
+
+            conversa.atendimento_humano = False
+            conversa.status_atendimento = "finalizado"
+            conversa.state = "inicio"
+            conversa.last_message_at = datetime.now(timezone.utc)
+            db.commit()
+
+            if is_ajax:
+                return JSONResponse({
+                    "ok": True,
+                    "finalizado": True,
+                    "redirect_url": "/admin/conversas"
+                })
+
+            return RedirectResponse(url="/admin/conversas", status_code=302)
+
+        tem_arquivo = len(arquivos_validos) > 0
+
+        if not mensagem and not tem_arquivo:
+            if is_ajax:
+                return JSONResponse(
+                    {"ok": False, "error": "Digite uma mensagem ou anexe um arquivo."},
+                    status_code=400
+                )
+            return RedirectResponse(url=f"/admin/conversas/{telefone}", status_code=302)
+
+        if tem_arquivo:
+            from app.meta.whatsapp_api import _local_media_path
+
+            total_arquivos = len(arquivos_validos)
+
+            for i, arquivo in enumerate(arquivos_validos):
+                file_bytes = await arquivo.read()
+                mime_type = (
+                    arquivo.content_type
+                    or mimetypes.guess_type(arquivo.filename)[0]
+                    or "application/octet-stream"
+                )
+                media_id = await upload_media_bytes(file_bytes, arquivo.filename, mime_type)
+                tipo_conteudo = tipo_conteudo_por_mime(mime_type)
+
+                caption_atual = mensagem if (mensagem and i == total_arquivos - 1) else None
+
+                if tipo_conteudo == "imagem":
+                    await send_image_message(telefone, media_id, caption=caption_atual)
+                elif tipo_conteudo == "audio":
+                    await send_audio_message(telefone, media_id)
+                    if caption_atual:
+                        await send_text_message(telefone, caption_atual)
+                elif tipo_conteudo == "video":
+                    await send_video_message(telefone, media_id, caption=caption_atual)
+                else:
+                    await send_document_message(
+                        telefone,
+                        media_id,
+                        arquivo.filename,
+                        caption=caption_atual
+                    )
+
+                local_path, public_url = _local_media_path(arquivo.filename, mime_type)
+
+                with open(local_path, "wb") as f:
+                    f.write(file_bytes)
+
+                salvar_mensagem(
+                    db=db,
+                    id_escola=usuario.id_escola,
+                    telefone_usuario=telefone,
+                    tipo_mensagem="enviada",
+                    conteudo=caption_atual if caption_atual else "",
+                    tipo_conteudo=tipo_conteudo,
+                    media_url=public_url,
+                    media_mime_type=mime_type,
+                    media_filename=arquivo.filename,
+                    media_id=media_id,
+                )
+
+        elif mensagem:
+            await send_text_message(telefone, mensagem)
+            salvar_mensagem(
+                db=db,
+                id_escola=usuario.id_escola,
+                telefone_usuario=telefone,
+                tipo_mensagem="enviada",
+                conteudo=mensagem,
+                tipo_conteudo="texto",
+            )
+
+        conversa.atendimento_humano = True
+        conversa.status_atendimento = "em_atendimento"
         conversa.last_message_at = datetime.now(timezone.utc)
         db.commit()
+
+        if is_ajax:
+            return JSONResponse({"ok": True})
+
         return RedirectResponse(url=f"/admin/conversas/{telefone}", status_code=302)
 
-    tem_arquivo = arquivo is not None and bool(arquivo.filename)
+    except Exception as e:
+        db.rollback()
 
-    if not mensagem and not tem_arquivo:
-        return RedirectResponse(url=f"/admin/conversas/{telefone}", status_code=302)
+        if is_ajax:
+            return JSONResponse(
+                {"ok": False, "error": f"Erro ao enviar mensagem: {str(e)}"},
+                status_code=500
+            )
 
-    if tem_arquivo:
-        file_bytes = await arquivo.read()
-        mime_type = arquivo.content_type or mimetypes.guess_type(arquivo.filename)[0] or "application/octet-stream"
-        media_id = await upload_media_bytes(file_bytes, arquivo.filename, mime_type)
-        tipo_conteudo = tipo_conteudo_por_mime(mime_type)
-
-        if tipo_conteudo == "imagem":
-            await send_image_message(telefone, media_id, caption=mensagem)
-        elif tipo_conteudo == "audio":
-            await send_audio_message(telefone, media_id)
-            if mensagem:
-                await send_text_message(telefone, mensagem)
-        elif tipo_conteudo == "video":
-            await send_video_message(telefone, media_id, caption=mensagem)
-        else:
-            await send_document_message(telefone, media_id, arquivo.filename, caption=mensagem)
-
-        from app.meta.whatsapp_api import _local_media_path  # reaproveitando helper interno
-        local_path, public_url = _local_media_path(arquivo.filename, mime_type)
-        with open(local_path, "wb") as f:
-            f.write(file_bytes)
-
-        salvar_mensagem(
-            db=db,
-            id_escola=usuario.id_escola,
-            telefone_usuario=telefone,
-            tipo_mensagem="enviada",
-            conteudo=mensagem,
-            tipo_conteudo=tipo_conteudo,
-            media_url=public_url,
-            media_mime_type=mime_type,
-            media_filename=arquivo.filename,
-            media_id=media_id,
-        )
-
-    elif mensagem:
-        await send_text_message(telefone, mensagem)
-        salvar_mensagem(
-            db=db,
-            id_escola=usuario.id_escola,
-            telefone_usuario=telefone,
-            tipo_mensagem="enviada",
-            conteudo=mensagem,
-            tipo_conteudo="texto",
-        )
-
-    conversa.atendimento_humano = True
-    conversa.status_atendimento = "em_atendimento"
-    conversa.last_message_at = datetime.now(timezone.utc)
-    db.commit()
-
-    return RedirectResponse(url=f"/admin/conversas/{telefone}", status_code=302)
+        raise e
 
 
 @router.get("/alunos", response_class=HTMLResponse)

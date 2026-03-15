@@ -24,13 +24,7 @@
   {% for m in mensagens %}
     <div class="chat-row {% if m.tipo_mensagem == 'enviada' %}chat-row-outgoing{% else %}chat-row-incoming{% endif %}">
       <div class="chat-bubble {% if m.tipo_mensagem == 'enviada' %}chat-bubble-outgoing{% else %}chat-bubble-incoming{% endif %}">
-        <div class="chat-meta">
-          {% if m.tipo_mensagem == 'enviada' %}
-            Secretaria
-          {% else %}
-            Responsável
-          {% endif %}
-        </div>
+
 
         {% if m.conteudo %}
           <div class="chat-text">{{ m.conteudo }}</div>

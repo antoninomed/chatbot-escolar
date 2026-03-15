@@ -1,90 +1,98 @@
 {% extends "base.html" %}
 {% block title %}Configurações{% endblock %}
-{% block page_title %}Configurações do sistema{% endblock %}
-{% block page_subtitle %}Concentre os dados institucionais e os parâmetros principais da operação em uma interface mais clara e vendável.{% endblock %}
+{% block page_title %}Configurações da operação{% endblock %}
+{% block page_subtitle %}Gerencie as informações institucionais, o canal oficial de atendimento e os parâmetros principais da implantação em um ambiente pronto para produção.{% endblock %}
+
 {% block page_actions %}
-<a href="/admin" class="quick-chip"><i class="bi bi-grid"></i> Dashboard</a>
+<a href="/admin" class="quick-chip"><i class="bi bi-grid"></i> Visão geral</a>
 {% endblock %}
 
 {% block content %}
 <div class="config-grid">
-  <section class="config-card span-8">
-    <div class="config-title">Identidade da escola</div>
-    <div class="config-copy">Informações institucionais exibidas e utilizadas pelo ecossistema do chatbot.</div>
 
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">Nome da escola</label>
-        <input class="form-control" value="{{ escola.name }}" readonly>
+  <section class="config-card span-8">
+    <div class="config-section-header">
+      <div>
+        <div class="config-eyebrow">Identidade institucional</div>
+        <div class="config-title">Dados da instituição</div>
+        <div class="config-copy">
+          Informações principais utilizadas para identificação da organização no painel administrativo e nas rotinas do chatbot.
+        </div>
       </div>
-      <div class="col-md-6">
-        <label class="form-label">Timezone</label>
-        <input class="form-control" value="{{ escola.timezone }}" readonly>
+      <div class="config-badge success">
+        <i class="bi bi-patch-check-fill"></i>
+        Ambiente configurado
       </div>
+    </div>
+
+    <div class="row g-4 mt-1">
+      <div class="col-md-6">
+        <label class="form-label">Nome da instituição</label>
+        <div class="config-readonly-field">
+          <i class="bi bi-building"></i>
+          <span>{{ escola.name or "Instituição configurada" }}</span>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Fuso horário operacional</label>
+        <div class="config-readonly-field">
+          <i class="bi bi-clock"></i>
+          <span>{{ escola.timezone or "America/Fortaleza" }}</span>
+        </div>
+      </div>
+
       <div class="col-12">
-        <label class="form-label">Phone Number ID</label>
-        <input class="form-control" value="{{ escola.whatsapp_phone_number_id }}" readonly>
+        <label class="form-label">Identificador do canal oficial</label>
+        <div class="config-readonly-field mono">
+          <i class="bi bi-whatsapp"></i>
+          <span>{{ escola.whatsapp_phone_number_id or "Não configurado" }}</span>
+        </div>
+        <div class="config-helper">
+          Identificador vinculado à integração oficial do WhatsApp Business para envio e recebimento de mensagens.
+        </div>
       </div>
     </div>
   </section>
 
   <section class="config-card span-4">
-    <div class="config-title">Status da integração</div>
-    <div class="config-copy">Leitura rápida do ambiente para facilitar auditoria operacional.</div>
+    <div class="config-eyebrow">Status do ambiente</div>
+    <div class="config-title">Resumo da integração</div>
+    <div class="config-copy">
+      Visão rápida dos componentes essenciais da operação para acompanhamento comercial e técnico.
+    </div>
 
-    <div class="info-list">
+    <div class="info-list mt-4">
       <div class="info-item">
-        <div class="info-label">Canal principal</div>
-        <div class="info-value">WhatsApp Business</div>
+        <div class="info-label">Canal oficial</div>
+        <div class="info-value">
+          <i class="bi bi-whatsapp me-2"></i>WhatsApp Business
+        </div>
       </div>
+
       <div class="info-item">
-        <div class="info-label">Disponibilidade</div>
-        <div class="info-value text-success">Operando normalmente</div>
+        <div class="info-label">Status da operação</div>
+        <div class="info-value text-success">
+          <i class="bi bi-check-circle-fill me-2"></i>Operação ativa
+        </div>
       </div>
+
       <div class="info-item">
-        <div class="info-label">Tenant</div>
-        <div class="info-value">Configuração carregada</div>
+        <div class="info-label">Ambiente</div>
+        <div class="info-value">
+          <i class="bi bi-shield-check me-2"></i>Produção
+        </div>
+      </div>
+
+      <div class="info-item">
+        <div class="info-label">Configuração carregada</div>
+        <div class="info-value">
+          <i class="bi bi-database-check me-2"></i>Parâmetros disponíveis
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="config-card span-6">
-    <div class="config-title">Boas práticas operacionais</div>
-    <div class="config-copy">Uma área estratégica para deixar seu produto mais profissional para venda e implantação futura.</div>
-    <div class="info-list">
-      <div class="info-item">
-        <div class="info-value">Centralizar horários, mensagens padrão e links em uma configuração por escola.</div>
-      </div>
-      <div class="info-item">
-        <div class="info-value">Separar dados de integração, identidade visual e regras do bot em blocos próprios.</div>
-      </div>
-      <div class="info-item">
-        <div class="info-value">Criar uma camada de status para webhook, banco e API com indicadores reais.</div>
-      </div>
-    </div>
-  </section>
-
-  <section class="config-card span-6">
-    <div class="config-title">Resumo do ambiente</div>
-    <div class="config-copy">Cartão executivo pensado para parecer SaaS e passar solidez ao cliente.</div>
-    <div class="hero-stats">
-      <div class="hero-stat">
-        <div class="hero-stat-label">Canal</div>
-        <div class="hero-stat-value">WA</div>
-      </div>
-      <div class="hero-stat">
-        <div class="hero-stat-label">Timezone</div>
-        <div class="hero-stat-value">{{ escola.timezone }}</div>
-      </div>
-      <div class="hero-stat">
-        <div class="hero-stat-label">Tenant</div>
-        <div class="hero-stat-value">1</div>
-      </div>
-      <div class="hero-stat">
-        <div class="hero-stat-label">Integrações</div>
-        <div class="hero-stat-value">Ativas</div>
-      </div>
-    </div>
-  </section>
+ 
 </div>
 {% endblock %}

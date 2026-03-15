@@ -23,7 +23,7 @@ def obter_ou_criar_conversa(db: Session, tenant_id, user_wa_id: str) -> Conversa
         contexto_json={},
         atendimento_humano=False,
         status_atendimento="bot",
-        ultima_data=datetime.utcnow(),
+        last_message_at=datetime.utcnow(),
     )
 
     db.add(conversa)
